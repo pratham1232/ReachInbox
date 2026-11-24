@@ -7,6 +7,7 @@ import { logger } from '../utils/logger.js';
 
 export const esClient = new Client({
   node: env.ELASTICSEARCH_URL,
+  ...(env.ELASTICSEARCH_API_KEY ? { auth: { apiKey: env.ELASTICSEARCH_API_KEY } } : {}),
 });
 
 export async function ensureEmailIndex(): Promise<void> {

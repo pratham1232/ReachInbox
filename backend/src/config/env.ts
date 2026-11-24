@@ -16,6 +16,7 @@ const envSchema = z.object({
     .default('postgresql://postgres:postgres@localhost:5432/reachinbox'),
   REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
   ELASTICSEARCH_URL: z.string().url().default('http://localhost:9200'),
+  ELASTICSEARCH_API_KEY: z.string().optional(),
   ELASTICSEARCH_INDEX: z.string().min(1).default('emails'),
 
   JWT_SECRET: z.string().min(16).default('dev-jwt-secret-change-me-in-prod-12345'),
