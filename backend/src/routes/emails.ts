@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { emails, senders } from '../db/schema.js';
@@ -212,20 +212,74 @@ router.get('/search', async (req, res, next) => {
     const page = Math.max(1, Number(req.query.page) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 20));
 
-    const result = await searchEmailsInEs({
-      userId: req.user!.id,
-      query: q,
-      status,
-      page,
-      pageSize,
-    });
+    try {
+      const result = await searchEmailsInEs({
+        userId: req.user!.id,
+        query: q,
+        status,
+        page,
+        pageSize,
+      });
 
-    res.json({
-      items: result.items,
-      total: result.total,
-      page,
-      pageSize,
-    });
+      res.json({
+        items: result.items,
+        total: result.total,
+        page,
+        pageSize,
+        source: 'elasticsearch',
+      });
+    } catch {
+      const offset = (page - 1) * pageSize;
+      const conditions = [eq(emails.userId, req.user!.id)];
+      if (status === 'sent_or_failed') {
+        conditions.push(inArray(emails.status, ['sent', 'failed']));
+      } else if (status === 'scheduled') {
+        conditions.push(inArray(emails.status, ['scheduled', 'processing']));
+      }
+      if (q.trim()) {
+        const pattern = `%${q.trim()}%`;
+        conditions.push(
+          or(
+            ilike(emails.recipient, pattern),
+            ilike(emails.subject, pattern),
+            ilike(emails.body, pattern),
+          )!,
+        );
+      }
+
+      const whereClause = and(...conditions);
+      const [items, countRes] = await Promise.all([
+        db
+          .select({
+            id: emails.id,
+            recipient: emails.recipient,
+            subject: emails.subject,
+            scheduledAt: emails.scheduledAt,
+            sentAt: emails.sentAt,
+            status: emails.status,
+            previewUrl: emails.previewUrl,
+            failureReason: emails.failureReason,
+            senderId: emails.senderId,
+          })
+          .from(emails)
+          .where(whereClause)
+          .orderBy(desc(emails.scheduledAt))
+          .limit(pageSize)
+          .offset(offset),
+        db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(emails)
+          .where(whereClause),
+      ]);
+
+      res.json({
+        items,
+        total: countRes[0]?.count ?? 0,
+        page,
+        pageSize,
+        source: 'postgres_fallback',
+      });
+    }
   } catch (err) {
     next(err);
   }

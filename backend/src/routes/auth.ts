@@ -34,10 +34,11 @@ router.get('/google/callback', async (req, res, next) => {
     const user = await authenticateGoogleCode(code);
     const token = signSessionJwt(user);
 
+    const isProd = env.NODE_ENV === 'production';
     res.cookie(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: env.NODE_ENV === 'production',
+      sameSite: isProd ? 'none' : 'lax',
+      secure: isProd,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       ...(env.COOKIE_DOMAIN && env.COOKIE_DOMAIN !== 'localhost'
         ? { domain: env.COOKIE_DOMAIN }
@@ -72,10 +73,11 @@ router.get('/me', requireAuth, async (req, res, next) => {
 });
 
 router.post('/logout', (_req, res) => {
+  const isProd = env.NODE_ENV === 'production';
   res.clearCookie(AUTH_COOKIE_NAME, {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: env.NODE_ENV === 'production',
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
   });
   res.json({ ok: true });
 });

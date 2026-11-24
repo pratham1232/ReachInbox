@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: reachinbox-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_WORKER_IN_API
+        value: "true"
+      - key: PORT
+        value: "4000"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
