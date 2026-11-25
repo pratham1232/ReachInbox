@@ -40,7 +40,15 @@ export async function reconcileScheduledEmails(): Promise<{
 
   for (const row of scheduledRows) {
     const existingJob = await emailQueue.getJob(row.id);
-    if (!existingJob) {
+    let needsEnqueue = !existingJob;
+    if (existingJob) {
+      const state = await existingJob.getState();
+      if (state === 'failed') {
+        await existingJob.remove();
+        needsEnqueue = true;
+      }
+    }
+    if (needsEnqueue) {
       missingJobs.push({
         emailId: row.id,
         data: {

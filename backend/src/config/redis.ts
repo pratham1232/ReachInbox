@@ -16,10 +16,14 @@ redis.on('connect', () => {
 });
 
 export function createBullMQConnection(): IORedis.default {
-  return new IORedis.default(env.REDIS_URL, {
+  const conn = new IORedis.default(env.REDIS_URL, {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
   });
+  conn.on('error', (err: Error) => {
+    logger.error('BullMQ Redis connection error', { error: err.message });
+  });
+  return conn;
 }
 
 export async function closeRedis(): Promise<void> {

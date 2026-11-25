@@ -1,8 +1,9 @@
 import { Queue } from 'bullmq';
 import { createBullMQConnection } from '../config/redis.js';
+import { env } from '../config/env.js';
 import type { EmailJobData } from '../types/index.js';
 
-export const EMAIL_QUEUE_NAME = 'email-send';
+export const EMAIL_QUEUE_NAME = env.EMAIL_QUEUE_NAME;
 
 export const emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE_NAME, {
   connection: createBullMQConnection(),

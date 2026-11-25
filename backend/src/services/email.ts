@@ -79,6 +79,9 @@ function getTransporter(sender: Sender): Transporter {
     pool: true,
     maxConnections: 5,
     maxMessages: 100,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 
   transporterCache.set(sender.id, transporter);

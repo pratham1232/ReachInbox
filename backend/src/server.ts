@@ -109,6 +109,7 @@ async function bootstrap() {
 
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}, shutting down API server gracefully...`);
+    server.closeAllConnections();
     server.close(async () => {
       if (embeddedWorker) {
         await embeddedWorker.close();

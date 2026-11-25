@@ -41,6 +41,7 @@ const envSchema = z.object({
     .default('http://localhost:4000/api/slack/callback'),
 
   WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
+  EMAIL_QUEUE_NAME: z.string().min(1).default('email-send'),
   MIN_DELAY_BETWEEN_EMAILS_MS: z.coerce.number().int().nonnegative().default(2000),
   MAX_EMAILS_PER_HOUR_PER_SENDER: z.coerce.number().int().positive().default(100),
   MAX_EMAILS_PER_HOUR: z.coerce.number().int().positive().default(500),
